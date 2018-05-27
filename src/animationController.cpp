@@ -6,11 +6,13 @@
 
 AnimationController::AnimationController(painlessMesh* meshRef,
   uint16_t pixelCountIn, bool gammaSetting) {
+    Serial.println(F("AnimationController::AnimationController(...): Call"));
     mesh = meshRef;
     gamma = gammaSetting;
+    Serial.println(F("AnimationController::AnimationController(...): init strip"));
     PixelCountChanged(pixelCountIn);
 
-
+    Serial.println(F("AnimationController::AnimationController(...): gen test json"));
     StaticJsonBuffer<200> jsonBuffer;
 
     JsonObject& root = jsonBuffer.createObject();
@@ -18,16 +20,25 @@ AnimationController::AnimationController(painlessMesh* meshRef,
 
     //JsonObject& jsonConfig = jsonBuffer.createObject();
     //jsonConfig["duration"] = (uint8_t)1000000;
+    Serial.println(F("AnimationController::AnimationController(...): init blink"));
     currentAnimation = new Blink(root, strip);
 
 }
 
 void AnimationController::PixelCountChanged(uint16_t pixelCount) {
   if(strip != NULL) {
+    Serial.println(F("AnimationController::PixelCountChanged(...): strip is not NULL"));
     delete strip;
   }
+  Serial.println(F("AnimationController::PixelCountChanged(...): init strip"));
   strip = new NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod>(pixelCount);
+  Serial.println(F("AnimationController::PixelCountChanged(...): begin strip"));
+  //TODO: debug
   strip->Begin();
+  strip->ClearTo(255);
+  strip->Show();
+  delay(100);
+
 }
 
 void AnimationController::update() {

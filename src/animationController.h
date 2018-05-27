@@ -13,7 +13,7 @@ class AnimationController {
   private:
     painlessMesh* mesh;
     bool gamma;
-    NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod>* strip;
+    NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod>* strip = NULL;
     void PixelCountChanged(uint16_t pixelCount);
     Animation* currentAnimation;
 };

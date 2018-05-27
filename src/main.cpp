@@ -94,8 +94,10 @@ void dsConfig(JsonObject &json) {
 // Load configugration JSON file
 void loadConfig() {
 	// Zeroize Config struct
+  Serial.println(F("loadConfig(): memset"));
 	memset(&config, 0, sizeof(config));
 
+  Serial.println(F("loadConfig(): spiffs open"));
 	// Load CONFIG_FILE json. Create and init with defaults if not found
 	File file = SPIFFS.open(CONFIG_FILE, "r");
 	if (!file) {
@@ -171,14 +173,19 @@ void setup() {
   Serial.begin(115200);
   while (!Serial);
 
+  Serial.println(F("* Open FS."));
   SPIFFS.begin();
+  Serial.println(F("* Load config."));
   loadConfig();
+  Serial.println(F("* Set hostname."));
   WiFi.hostname(config.hostname);
+  Serial.println(F("* Init AnimationController"));
   animCtrl = new AnimationController(&mesh, config.pixelCount, config.gamma);
 
 //mesh.setDebugMsgTypes( ERROR | MESH_STATUS | CONNECTION | SYNC | COMMUNICATION | GENERAL | MSG_TYPES | REMOTE ); // all types on
   mesh.setDebugMsgTypes( ERROR | STARTUP );  // set before init() so that you can see startup messages
 
+  Serial.println(F("* Mesh init."));
   mesh.init( MESH_PREFIX, MESH_PASSWORD, &userScheduler, MESH_PORT );
   mesh.onReceive(&receivedCallback);
   mesh.onNewConnection(&newConnectionCallback);
