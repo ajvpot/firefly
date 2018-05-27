@@ -40,6 +40,7 @@ void sendMessage() {
 // Needed for painless library
 void receivedCallback( uint32_t from, String &msg ) {
   Serial.printf("startHere: Received from %u msg=%s\n", from, msg.c_str());
+  //TODO: json deserialize this string, multiple message types?
 }
 
 void newConnectionCallback(uint32_t nodeId) {
@@ -180,6 +181,8 @@ void setup() {
   mesh.onChangedConnections(&changedConnectionCallback);
   mesh.onNodeTimeAdjusted(&nodeTimeAdjustedCallback);
 
+  //TODO: initialize animationController
+
   userScheduler.addTask( taskSendMessage );
   taskSendMessage.enable();
 }
@@ -188,5 +191,5 @@ void loop() {
   userScheduler.execute(); // it will run mesh scheduler as well
   mesh.update();
 
-  //TODO: Replace below with call to animation manager
+  //TODO: animationController update
 }
