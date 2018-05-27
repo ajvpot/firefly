@@ -3,17 +3,24 @@
 //
 // 1. sends a silly message to every node on the mesh at a random time between 1 and 5 seconds
 // 2. prints anything it receives to Serial.print
-//
-//
+// bootstrap a new device:
+// pio run -t uploadfs
+// pio run -t upload
 //************************************************************
 #include "painlessMesh.h"
+#include <NeoPixelBus.h>
 
-#define   MESH_PREFIX     "whateverYouLike"
-#define   MESH_PASSWORD   "somethingSneaky"
-#define   MESH_PORT       5555
+#define   MESH_PREFIX      "whateverYouLike"
+#define   MESH_PASSWORD    "somethingSneaky"
+#define   MESH_PORT        5555
+#define   COLOR_SATURATION 128
+
+const uint16_t PixelCount = 50;
 
 Scheduler userScheduler; // to control your personal task
 painlessMesh  mesh;
+
+NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip(PixelCount);
 
 // User stub
 void sendMessage() ; // Prototype so PlatformIO doesn't complain
@@ -46,6 +53,10 @@ void nodeTimeAdjustedCallback(int32_t offset) {
 
 void setup() {
   Serial.begin(115200);
+  while (!Serial);
+
+  strip.Begin();
+  strip.Show();
 
 //mesh.setDebugMsgTypes( ERROR | MESH_STATUS | CONNECTION | SYNC | COMMUNICATION | GENERAL | MSG_TYPES | REMOTE ); // all types on
   mesh.setDebugMsgTypes( ERROR | STARTUP );  // set before init() so that you can see startup messages
@@ -63,4 +74,7 @@ void setup() {
 void loop() {
   userScheduler.execute(); // it will run mesh scheduler as well
   mesh.update();
+
+  strip.ClearTo(RgbColor(COLOR_SATURATION, 0, 0));
+  strip.Show();
 }
