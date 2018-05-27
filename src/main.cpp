@@ -9,6 +9,7 @@
 //************************************************************
 #include "painlessMesh.h"
 #include <NeoPixelBus.h>
+#include "config.h"
 
 #define   MESH_PREFIX      "whateverYouLike"
 #define   MESH_PASSWORD    "somethingSneaky"
@@ -19,8 +20,6 @@ const uint16_t PixelCount = 50;
 
 Scheduler userScheduler; // to control your personal task
 painlessMesh  mesh;
-
-NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip(PixelCount);
 
 // User stub
 void sendMessage() ; // Prototype so PlatformIO doesn't complain
@@ -55,9 +54,6 @@ void setup() {
   Serial.begin(115200);
   while (!Serial);
 
-  strip.Begin();
-  strip.Show();
-
 //mesh.setDebugMsgTypes( ERROR | MESH_STATUS | CONNECTION | SYNC | COMMUNICATION | GENERAL | MSG_TYPES | REMOTE ); // all types on
   mesh.setDebugMsgTypes( ERROR | STARTUP );  // set before init() so that you can see startup messages
 
@@ -74,7 +70,4 @@ void setup() {
 void loop() {
   userScheduler.execute(); // it will run mesh scheduler as well
   mesh.update();
-
-  strip.ClearTo(RgbColor(COLOR_SATURATION, 0, 0));
-  strip.Show();
 }
