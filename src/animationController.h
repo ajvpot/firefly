@@ -1,32 +1,20 @@
 // animation controller
-
+#ifndef animationController_h
+#define animationController_h
 #include <NeoPixelBus.h>
 #include "painlessMesh.h"
 #include "arduinoJson.h"
+#include "animation.h"
 
 class AnimationController {
   public:
+    AnimationController(painlessMesh* mesh, uint16_t pixelCount, bool gamma);
+    void update();
+  private:
     painlessMesh* mesh;
     bool gamma;
-    NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod>* strip = NULL;
-
-    void PixelCountChanged(uint16_t pixelCount) {
-      if(strip != NULL) {
-        delete strip;
-      }
-      strip = new NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod>(pixelCount);
-      strip->Begin();
-    }
-
-    void update() {
-      //float_t animProg = (mesh.getNodeTime()%animTime)/(float_t)animTime;
-    }
+    NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod>* strip;
+    void PixelCountChanged(uint16_t pixelCount);
+    Animation* currentAnimation;
 };
-
-class Animation {
-  public:
-    AnimationController* controller;
-    virtual void render(float_t progress);
-    virtual void setState(JsonObject config);
-    virtual uint32_t getDuration();
-};
+#endif
