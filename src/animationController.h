@@ -2,6 +2,7 @@
 
 #include <NeoPixelBus.h>
 #include "painlessMesh.h"
+#include "arduinoJson.h"
 
 NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip(PixelCount);
 
@@ -16,5 +17,6 @@ class AnimationController {
 class Animation {
   public:
     virtual void render(float_t progress);
+    virtual void setState(JsonObject config);
     uint32_t baseDuration;
 };
