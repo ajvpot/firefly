@@ -11,6 +11,8 @@
 #include <NeoPixelBus.h>
 #include "main.h"
 #include "FS.h"
+#include "animationController.h"
+
 
 #define   MESH_PREFIX      "whateverYouLike"
 #define   MESH_PASSWORD    "somethingSneaky"
@@ -22,6 +24,7 @@ const uint16_t PixelCount = 50;
 
 Scheduler userScheduler; // to control your personal task
 painlessMesh  mesh;
+AnimationController* animCtrl;
 
 config_t config;         // Current configuration
 
@@ -171,6 +174,7 @@ void setup() {
   SPIFFS.begin();
   loadConfig();
   WiFi.hostname(config.hostname);
+  animCtrl = new AnimationController(&mesh, config.pixelCount, config.gamma);
 
 //mesh.setDebugMsgTypes( ERROR | MESH_STATUS | CONNECTION | SYNC | COMMUNICATION | GENERAL | MSG_TYPES | REMOTE ); // all types on
   mesh.setDebugMsgTypes( ERROR | STARTUP );  // set before init() so that you can see startup messages
@@ -190,6 +194,6 @@ void setup() {
 void loop() {
   userScheduler.execute(); // it will run mesh scheduler as well
   mesh.update();
-
+  animCtrl->update();
   //TODO: animationController update
 }

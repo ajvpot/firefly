@@ -7,7 +7,7 @@
 
 class Blink : public Animation {
 public:
-  Blink(JsonObject config, NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod>* strip);
+  Blink(JsonObject& config, NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod>* strip);
 private:
   // Sets the config
   struct AnimationConfig {
