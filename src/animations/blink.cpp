@@ -1,5 +1,5 @@
 //asdf
-#include "animationController.h"
+#include "animationController.cpp"
 #include "arduinoJson.h"
 
 class Blink : public Animation {
@@ -8,6 +8,7 @@ public:
   // Sets the config
   struct AnimationConfig {
     RgbColor color;
+    uint32_t duration;
   };
 
   // stores the config
@@ -16,11 +17,17 @@ public:
   // populates the config
   void setState(JsonObject config) {
     animationConfig.color = config["color"];
+    animationConfig.duration = config["duration"];
+  }
+
+  // returns the duration of this instance
+  uint32_t getDuration() {
+    return animationConfig.duration;
   }
 
   void render(float_t progress) {
     if(progress >= 0.5) {
-      
+
     }
   };
 };

@@ -4,19 +4,29 @@
 #include "painlessMesh.h"
 #include "arduinoJson.h"
 
-NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip(PixelCount);
-
 class AnimationController {
   public:
-    painlessMesh mesh;
-    uint32_t duration;
-    uint32_t curTime;
-    void update();
+    painlessMesh* mesh;
+    bool gamma;
+    NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod>* strip = NULL;
+
+    void PixelCountChanged(uint16_t pixelCount) {
+      if(strip != NULL) {
+        delete strip;
+      }
+      strip = new NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod>(pixelCount);
+      strip->Begin();
+    }
+
+    void update() {
+      //float_t animProg = (mesh.getNodeTime()%animTime)/(float_t)animTime;
+    }
 };
 
 class Animation {
   public:
+    AnimationController* controller;
     virtual void render(float_t progress);
     virtual void setState(JsonObject config);
-    uint32_t baseDuration;
+    virtual uint32_t getDuration();
 };
