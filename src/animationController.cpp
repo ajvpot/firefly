@@ -26,6 +26,8 @@ AnimationController::AnimationController(painlessMesh* meshRef,
 }
 
 void AnimationController::PixelCountChanged(uint16_t pixelCount) {
+  Serial.print(F("AnimationController::PixelCountChanged(...): pixelcount is"));
+  Serial.println(pixelCount);
   if(strip != NULL) {
     Serial.println(F("AnimationController::PixelCountChanged(...): strip is not NULL"));
     delete strip;
