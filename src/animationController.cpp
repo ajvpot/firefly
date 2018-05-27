@@ -1,5 +1,6 @@
 #include <NeoPixelBus.h>
 #include "animationController.h"
+#include "animations/blink.h"
 
 
 AnimationController::AnimationController(painlessMesh* meshRef,
@@ -9,7 +10,7 @@ AnimationController::AnimationController(painlessMesh* meshRef,
     PixelCountChanged(pixelCountIn);
 
     JsonObject jsonConfig =
-    currentAnimation =
+    currentAnimation = new Blink(jsonConfig, strip);
 
 }
 
