@@ -25,8 +25,6 @@ painlessMesh  mesh;
 
 config_t config;         // Current configuration
 
-NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip(PixelCount);
-
 // User stub
 void sendMessage() ; // Prototype so PlatformIO doesn't complain
 
@@ -169,9 +167,6 @@ void setup() {
   Serial.begin(115200);
   while (!Serial);
 
-  strip.Begin();
-  strip.Show();
-
   SPIFFS.begin();
   loadConfig();
   WiFi.hostname(config.hostname);
@@ -194,6 +189,4 @@ void loop() {
   mesh.update();
 
   //TODO: Replace below with call to animation manager
-  strip.ClearTo(RgbColor(COLOR_SATURATION, 0, 0));
-  strip.Show();
 }
