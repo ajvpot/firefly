@@ -1,18 +1,19 @@
 //asdf
-#ifndef pulse_h
-#define pulse_h
+#ifndef lightWave_h
+#define lightWave_h
 #include "animationController.h"
 #include "animation.h"
 #include "arduinoJson.h"
 
-class Pulse : public Animation {
+class LightWave : public Animation {
 public:
-  Pulse(JsonObject& config, NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod>* strip);
+  LightWave(JsonObject& config, NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod>* strip);
 private:
   // Sets the config
   struct AnimationConfig {
     RgbColor color;
     uint32_t duration;
+    uint16_t position;
   };
   // stores the config
   AnimationConfig animationConfig;

@@ -1,6 +1,6 @@
 //asdf
-#ifndef blink_h
-#define blink_h
+#ifndef scanner_h
+#define scanner_h
 #include "animationController.h"
 #include "animation.h"
 #include "arduinoJson.h"
