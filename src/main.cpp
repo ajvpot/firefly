@@ -13,51 +13,104 @@
 #include "FS.h"
 #include "animationController.h"
 
+#include "animations/blink.h"
+#include "animations/colorWipe.h"
 
-#define   MESH_PREFIX      "whateverYouLike"
-#define   MESH_PASSWORD    "somethingSneaky"
-#define   MESH_PORT        5555
-#define   COLOR_SATURATION 128
-#define   CONFIG_FILE       "/config.json"
+/*
+#include "animations/lightWave.h"
+#include "animations/pulse.h"
+#include "animations/scanner.h"
+*/
+
+#define MESH_PREFIX "whateverYouLike"
+#define MESH_PASSWORD "somethingSneaky"
+#define MESH_PORT 5555
+#define COLOR_SATURATION 128
+#define CONFIG_FILE "/config.json"
 
 const uint16_t PixelCount = 50;
 
 Scheduler userScheduler; // to control your personal task
-painlessMesh  mesh;
-AnimationController* animCtrl;
+painlessMesh mesh;
+AnimationController *animCtrl;
 
-config_t config;         // Current configuration
+config_t config; // Current configuration
 
 // User stub
-void sendMessage() ; // Prototype so PlatformIO doesn't complain
+void sendMessage(); // Prototype so PlatformIO doesn't complain
 
-Task taskSendMessage( TASK_SECOND * 1 , TASK_FOREVER, &sendMessage );
+Task taskSendMessage(TASK_SECOND * 1, TASK_FOREVER, &sendMessage);
+Task taskCutAnimation(TASK_IMMEDIATE, TASK_ONCE);
 
-void sendMessage() {
-  String msg = "Hello from node ";
-  msg += mesh.getNodeId();
-  mesh.sendBroadcast( msg );
-  taskSendMessage.setInterval( random( TASK_SECOND * 1, TASK_SECOND * 5 ));
+void sendMessage()
+{
+	String msg = "Hello from node ";
+	msg += mesh.getNodeId();
+	mesh.sendBroadcast(msg);
+	taskSendMessage.setInterval(random(TASK_SECOND * 1, TASK_SECOND * 5));
 }
 
-// Needed for painless library
-void receivedCallback( uint32_t from, String &msg ) {
-  Serial.printf("startHere: Received from %u msg=%s\n", from, msg.c_str());
-  //TODO: json deserialize this string, multiple message types?
+void receivedCallback(uint32_t from, String &msg)
+{
+	Serial.printf("receivedCallback: Received from %u msg=%s\n", from, msg.c_str());
+	//TODO: json deserialize this string, multiple message types?
+	DynamicJsonBuffer jb(2048);
+	JsonObject &obj = jb.parseObject(msg.c_str());
+	if (!obj.success())
+	{
+		Serial.println("--> receivedCallback: json parse failed");
+		return;
+	}
+	auto action = obj["act"].as<int>();
+	switch (action)
+	{
+	case 0:
+		break;
+		// Schedule animation
+		/*
+		{
+			'act': 1,
+			'st': 1234, //millis
+			'ani': 0,
+			'cfg': {
+				...
+			}
+		}
+		*/
+	case 1:
+	{
+
+		auto startTime = obj["st"].as<int>();
+		auto animationIndex = obj["ani"].as<int>();
+		int offset = startTime - mesh.getNodeTime(); // ToDo: convert node time to millis
+
+		animCtrl->queue(animCtrl->animationFactory(animationIndex, obj["cfg"]));
+		taskCutAnimation.setCallback([&]() { animCtrl->cut(); });
+		taskCutAnimation.enableDelayed(offset);
+		break;
+	}
+	// Set intensity
+	case 2:
+	{
+		break;
+	}
+	}
 }
 
-void newConnectionCallback(uint32_t nodeId) {
-    Serial.printf("--> startHere: New Connection, nodeId = %u\n", nodeId);
+void newConnectionCallback(uint32_t nodeId)
+{
+	Serial.printf("--> startHere: New Connection, nodeId = %u\n", nodeId);
 }
 
-void changedConnectionCallback() {
-    Serial.printf("Changed connections %s\n",mesh.subConnectionJson().c_str());
+void changedConnectionCallback()
+{
+	Serial.printf("Changed connections %s\n", mesh.subConnectionJson().c_str());
 }
 
-void nodeTimeAdjustedCallback(int32_t offset) {
-    Serial.printf("Adjusted time %u. Offset = %d\n", mesh.getNodeTime(),offset);
+void nodeTimeAdjustedCallback(int32_t offset)
+{
+	Serial.printf("Adjusted time %u. Offset = %d\n", mesh.getNodeTime(), offset);
 }
-
 
 /////////////////////////////////////////////////////////
 //
@@ -69,14 +122,16 @@ void nodeTimeAdjustedCallback(int32_t offset) {
 void validateConfig() {}
 
 // De-Serialize Network config
-void dsConfig(JsonObject &json) {
-  // Generate default hostname if needed
-  config.hostname = json["hostname"].as<String>();
-  if (!config.hostname.length()) {
-    char chipId[7] = {0};
-    snprintf(chipId, sizeof(chipId), "%06x", ESP.getChipId());
-    config.hostname = "fmesh-" + String(chipId);
-  }
+void dsConfig(JsonObject &json)
+{
+	// Generate default hostname if needed
+	config.hostname = json["hostname"].as<String>();
+	if (!config.hostname.length())
+	{
+		char chipId[7] = {0};
+		snprintf(chipId, sizeof(chipId), "%06x", ESP.getChipId());
+		config.hostname = "fmesh-" + String(chipId);
+	}
 
 	// Fallback to embedded ssid and passphrase if null in config
 	config.ssid = json["ssid"].as<String>();
@@ -87,28 +142,33 @@ void dsConfig(JsonObject &json) {
 	if (!config.passphrase.length())
 		config.passphrase = "fireflyMesh";
 
-  config.gamma = json["gamma"];
-  config.pixelCount = json["pixelCount"];
+	config.gamma = json["gamma"];
+	config.pixelCount = json["pixelCount"];
 }
 
 // Load configugration JSON file
-void loadConfig() {
+void loadConfig()
+{
 	// Zeroize Config struct
-  Serial.println(F("loadConfig(): memset"));
+	Serial.println(F("loadConfig(): memset"));
 	memset(&config, 0, sizeof(config));
 
-  Serial.println(F("loadConfig(): spiffs open"));
+	Serial.println(F("loadConfig(): spiffs open"));
 	// Load CONFIG_FILE json. Create and init with defaults if not found
 	File file = SPIFFS.open(CONFIG_FILE, "r");
-	if (!file) {
+	if (!file)
+	{
 		Serial.println(F("- No configuration file found."));
 		config.ssid = "fireflyMesh";
 		config.passphrase = "fireflyMesh";
 		saveConfig();
-	} else {
+	}
+	else
+	{
 		// Parse CONFIG_FILE json
 		size_t size = file.size();
-		if (size > 2048) {
+		if (size > 2048)
+		{
 			Serial.println(F("*** Configuration File too large ***"));
 			return;
 		}
@@ -118,7 +178,8 @@ void loadConfig() {
 
 		DynamicJsonBuffer jsonBuffer;
 		JsonObject &json = jsonBuffer.parseObject(buf.get());
-		if (!json.success()) {
+		if (!json.success())
+		{
 			Serial.println(F("*** Configuration File Format Error ***"));
 			return;
 		}
@@ -133,7 +194,8 @@ void loadConfig() {
 }
 
 // Serialize the current config into a JSON string
-void serializeConfig(String &jsonString, bool pretty) {
+void serializeConfig(String &jsonString, bool pretty)
+{
 	// Create buffer and root object
 	DynamicJsonBuffer jsonBuffer;
 	JsonObject &json = jsonBuffer.createObject();
@@ -152,55 +214,61 @@ void serializeConfig(String &jsonString, bool pretty) {
 }
 
 // Save configuration JSON file
-void saveConfig() {
+void saveConfig()
+{
 	// Serialize Config
 	String jsonString;
 	serializeConfig(jsonString, true);
 
 	// Save Config
 	File file = SPIFFS.open(CONFIG_FILE, "w");
-	if (!file) {
+	if (!file)
+	{
 		Serial.println(F("*** Error creating configuration file ***"));
 		return;
-	} else {
+	}
+	else
+	{
 		file.println(jsonString);
 		Serial.println(F("* Configuration saved."));
 	}
 }
 
+void setup()
+{
+	Serial.begin(115200);
+	while (!Serial)
+		;
 
-void setup() {
-  Serial.begin(115200);
-  while (!Serial);
+	Serial.println(F("* Open FS."));
+	SPIFFS.begin();
+	Serial.println(F("* Load config."));
+	loadConfig();
+	Serial.println(F("* Set hostname."));
+	WiFi.hostname(config.hostname);
+	Serial.println(F("* Init AnimationController"));
+	animCtrl = new AnimationController(&mesh, config.pixelCount, config.gamma);
 
-  Serial.println(F("* Open FS."));
-  SPIFFS.begin();
-  Serial.println(F("* Load config."));
-  loadConfig();
-  Serial.println(F("* Set hostname."));
-  WiFi.hostname(config.hostname);
-  Serial.println(F("* Init AnimationController"));
-  animCtrl = new AnimationController(&mesh, config.pixelCount, config.gamma);
+	//mesh.setDebugMsgTypes( ERROR | MESH_STATUS | CONNECTION | SYNC | COMMUNICATION | GENERAL | MSG_TYPES | REMOTE ); // all types on
+	mesh.setDebugMsgTypes(ERROR | STARTUP); // set before init() so that you can see startup messages
 
-//mesh.setDebugMsgTypes( ERROR | MESH_STATUS | CONNECTION | SYNC | COMMUNICATION | GENERAL | MSG_TYPES | REMOTE ); // all types on
-  mesh.setDebugMsgTypes( ERROR | STARTUP );  // set before init() so that you can see startup messages
+	Serial.println(F("* Mesh init."));
+	mesh.init(MESH_PREFIX, MESH_PASSWORD, &userScheduler, MESH_PORT);
+	mesh.onReceive(&receivedCallback);
+	mesh.onNewConnection(&newConnectionCallback);
+	mesh.onChangedConnections(&changedConnectionCallback);
+	mesh.onNodeTimeAdjusted(&nodeTimeAdjustedCallback);
 
-  Serial.println(F("* Mesh init."));
-  mesh.init( MESH_PREFIX, MESH_PASSWORD, &userScheduler, MESH_PORT );
-  mesh.onReceive(&receivedCallback);
-  mesh.onNewConnection(&newConnectionCallback);
-  mesh.onChangedConnections(&changedConnectionCallback);
-  mesh.onNodeTimeAdjusted(&nodeTimeAdjustedCallback);
+	//TODO: initialize animationController
 
-  //TODO: initialize animationController
-
-  userScheduler.addTask( taskSendMessage );
-  taskSendMessage.enable();
+	userScheduler.addTask(taskSendMessage);
+	taskSendMessage.enable();
 }
 
-void loop() {
-  userScheduler.execute(); // it will run mesh scheduler as well
-  mesh.update();
-  animCtrl->update();
-  //TODO: animationController update
+void loop()
+{
+	userScheduler.execute(); // it will run mesh scheduler as well
+	mesh.update();
+	animCtrl->update();
+	//TODO: animationController update
 }

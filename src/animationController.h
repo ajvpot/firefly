@@ -10,11 +10,15 @@ class AnimationController {
   public:
     AnimationController(painlessMesh* mesh, uint16_t pixelCount, bool gamma);
     void update();
+    void cut();
+    void queue(Animation* newAnimation);
+    Animation *animationFactory(int animationIndex, JsonObject &cfg);
   private:
-    painlessMesh* mesh;
+    painlessMesh *mesh;
     bool gamma;
-    NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod>* strip = NULL;
+    NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> *strip = NULL;
     void PixelCountChanged(uint16_t pixelCount);
-    Animation* currentAnimation;
+    Animation *currentAnimation;
+    Animation *nextAnimation;
 };
 #endif
