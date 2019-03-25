@@ -38,14 +38,21 @@ config_t config; // Current configuration
 
 // User stub
 void sendMessage(); // Prototype so PlatformIO doesn't complain
+void cutNow(); // Prototype so PlatformIO doesn't complain
 
 Task taskSendMessage(TASK_SECOND * 1, TASK_FOREVER, &sendMessage);
-Task taskCutAnimation(TASK_IMMEDIATE, TASK_ONCE);
+Task taskCutAnimation(TASK_IMMEDIATE, TASK_ONCE, &cutNow);
+
+void cutNow(){
+	animCtrl->cut();
+}
+
 
 void sendMessage()
 {
-	String msg = "Hello from node ";
-	msg += mesh.getNodeId();
+	String msg = "{\"act\":1,\"st\":";
+	msg += (mesh.getNodeTime()/1000)+1000;
+	msg += ",\"ani\":0,\"cfg\":{\"duration\":100000}}";
 	mesh.sendBroadcast(msg);
 	taskSendMessage.setInterval(random(TASK_SECOND * 1, TASK_SECOND * 5));
 }
@@ -79,14 +86,14 @@ void receivedCallback(uint32_t from, String &msg)
 		*/
 	case 1:
 	{
-
+		Serial.println("--> receivedCallback: schedule animation");
 		auto startTime = obj["st"].as<int>();
 		auto animationIndex = obj["ani"].as<int>();
-		int offset = startTime - mesh.getNodeTime(); // ToDo: convert node time to millis
-
+		int offset = startTime - (mesh.getNodeTime()/1000);
+		Serial.printf("receivedCallback: offset is %d\n", offset);
+		//ToDo: if offset is less than zero, cut now.
 		animCtrl->queue(animCtrl->animationFactory(animationIndex, obj["cfg"]));
-		taskCutAnimation.setCallback([&]() { animCtrl->cut(); });
-		taskCutAnimation.enableDelayed(offset);
+		animCtrl->cut();
 		break;
 	}
 	// Set intensity
@@ -241,7 +248,12 @@ void setup()
 		;
 
 	Serial.println(F("* Open FS."));
-	SPIFFS.begin();
+	if (!SPIFFS.begin())
+	{
+		Serial.println(F("* Format FS..."));
+		SPIFFS.format();
+		SPIFFS.begin();
+	}
 	Serial.println(F("* Load config."));
 	loadConfig();
 	Serial.println(F("* Set hostname."));

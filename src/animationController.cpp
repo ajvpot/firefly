@@ -3,6 +3,8 @@
 #include "animations/blink.h"
 #include "animations/colorWipe.h"
 #include "animations/lightWave.h"
+#include "animations/pulse.h"
+#include "animations/scanner.h"
 #include "ArduinoJson.h"
 
 AnimationController::AnimationController(painlessMesh *meshRef,
@@ -20,7 +22,9 @@ AnimationController::AnimationController(painlessMesh *meshRef,
   root["duration"] = 1000000;
 
   Serial.println(F("AnimationController::AnimationController(...): init blink"));
-  currentAnimation = new Blink(root, strip);
+  queue(new Blink(root, strip));
+  cut();
+  //currentAnimation = new Blink(root, strip);
 }
 
 void AnimationController::PixelCountChanged(uint16_t pixelCount)
@@ -50,23 +54,15 @@ void AnimationController::update()
 
 void AnimationController::queue(Animation *newAnimation)
 {
-  if (nextAnimation != NULL)
-  {
-    Serial.println(F("AnimationController::queue(...): nextAnimation is not NULL"));
-    delete nextAnimation;
-  }
+  Serial.println(F("AnimationController::queue(...)"));
   nextAnimation = newAnimation;
 }
 
 void AnimationController::cut()
 {
+  Serial.println(F("AnimationController::cut(...)"));
   auto oldAnimation = currentAnimation;
   currentAnimation = nextAnimation;
-  if (oldAnimation != NULL)
-  {
-    Serial.println(F("AnimationController::cut(...): oldAnimation is not NULL"));
-    delete oldAnimation;
-  }
 }
 // later: crossfade? new Crossfade(cfg, strip, animA, animB)
 
@@ -92,6 +88,20 @@ Animation* AnimationController::animationFactory(int animationIndex, JsonObject 
   case 2:
   {
     return new LightWave(cfg, strip);
+    break;
+  }
+  
+  //pulse
+  case 3:
+  {
+    return new Pulse(cfg, strip);
+    break;
+  }
+  
+  //scanner
+  case 4:
+  {
+    return new Scanner(cfg, strip);
     break;
   }
   }
