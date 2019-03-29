@@ -4,8 +4,9 @@
 #include "scanner.h"
 
 Scanner::Scanner(JsonObject& config, NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod>* stripRef) {
-  //animationConfig.color = config["color"].as<RgbColor>();;
-  animationConfig.duration = config["duration"].as<uint32_t>();;
+  animationConfig.color = RgbColor(config["r"].as<int>(), config["g"].as<int>(), config["b"].as<int>());
+  animationConfig.duration = config["duration"].as<uint32_t>();
+  animationConfig.size = config["size"].as<uint16_t>();
   strip = stripRef;
 } // color duration size speed
 

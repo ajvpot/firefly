@@ -4,7 +4,7 @@
 #include "colorWipe.h"
 
 ColorWipe::ColorWipe(JsonObject& config, NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod>* stripRef) {
-  //animationConfig.color = config["color"].as<RgbColor>();;
+  animationConfig.color = RgbColor(config["r"].as<int>(), config["g"].as<int>(), config["b"].as<int>());
   animationConfig.duration = config["duration"].as<uint32_t>();;
   strip = stripRef;
 } // color duration size speed
